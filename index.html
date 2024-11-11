@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam App</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.11.2/toastify.min.css">
+</head>
+
+<body class="bg-gray-100">
+
+    <!-- Navbar -->
+    <div id="navbar" class="bg-blue-600 p-4 text-white flex justify-between">
+        <div class="text-xl font-bold">Exam App</div>
+        <div id="nav-links" class="flex space-x-4">
+            <button onclick="showLoginForm()" class="bg-blue-500 py-1 px-3 rounded hover:bg-blue-700">Login</button>
+            <button onclick="showRegisterForm()"
+                class="bg-blue-500 py-1 px-3 rounded hover:bg-blue-700">Register</button>
+            <button onclick="logout()" class="bg-red-500 py-1 px-3 rounded hover:bg-red-700 hidden"
+                id="logout-button">Logout</button>
+        </div>
+    </div>
+
+    <!-- Login Form -->
+    <div id="login-form" class="hidden p-4 max-w-md mx-auto bg-white shadow-lg rounded mt-6">
+        <h2 class="text-2xl font-semibold mb-4">Login</h2>
+        <input type="text" id="login-username" placeholder="Username" class="w-full border p-2 mb-3 rounded">
+        <input type="password" id="login-password" placeholder="Password" class="w-full border p-2 mb-3 rounded">
+        <button onclick="login()"
+            class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-800 w-full">Login</button>
+    </div>
+
+    <!-- Register Form -->
+    <div id="register-form" class="hidden p-4 max-w-md mx-auto bg-white shadow-lg rounded mt-6">
+        <h2 class="text-2xl font-semibold mb-4">Register</h2>
+        <input type="text" id="register-username" placeholder="Username" class="w-full border p-2 mb-3 rounded">
+        <input type="password" id="register-password" placeholder="Password" class="w-full border p-2 mb-3 rounded">
+        <select id="register-role" class="w-full border p-2 mb-3 rounded">
+            <option value="student">Student</option>
+            <option value="teacher">Teacher</option>
+        </select>
+        <button onclick="register()"
+            class="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-800 w-full">Register</button>
+    </div>
+
+    <!-- Teacher Dashboard -->
+    <div id="teacher-dashboard" class="hidden p-4 max-w-2xl mx-auto bg-white shadow-lg rounded mt-6">
+        <h2 class="text-2xl font-semibold mb-4">Teacher Dashboard</h2>
+
+        <!-- Create Exam Form -->
+        <form id="create-exam-form" class="space-y-4">
+            <input type="text" id="exam-name" placeholder="Exam Name" class="w-full border p-2 rounded">
+            <textarea id="question-text" placeholder="Question" class="w-full border p-2 rounded"></textarea>
+            <div id="answer-options" class="space-y-2">
+                <input type="text" placeholder="Option 1" class="w-full border p-2 rounded">
+                <input type="text" placeholder="Option 2" class="w-full border p-2 rounded">
+                <input type="text" placeholder="Option 3 (Correct Answer)" class="w-full border p-2 rounded">
+            </div>
+            <button type="button" onclick="createExam()"
+                class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-800 w-full">Submit Exam</button>
+        </form>
+
+        <!-- Manage Exams -->
+        <h3 class="text-xl font-bold mt-6">Manage Exams</h3>
+        <div id="manage-exams" class="space-y-4"></div>
+
+        <!-- Records Table -->
+        <h3 class="text-xl font -bold mt-6">Exam Records</h3>
+        <table class="table-auto w-full mt-2 border">
+            <thead>
+                <tr>
+                    <th class="border px-4 py-2">Exam Name</th>
+                    <th class="border px-4 py-2">Student Name</th>
+                    <th class="border px-4 py-2">Marks Scored</th>
+                </tr>
+            </thead>
+            <tbody id="exam-records">
+                <tr>
+                    <td colspan="3" class="text-center p-4">No records available.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Student Dashboard -->
+    <div id="student-dashboard" class="hidden p-4 max-w-2xl mx-auto bg-white shadow-lg rounded mt-6">
+        <h2 class="text-2xl font-semibold mb-4">Student Dashboard</h2>
+        <div id="available-exams" class="space-y-4">
+            <p>No exams available.</p>
+        </div>
+        <button id="submit-exam" class="bg-blue-600 text-white py-2 px-4 rounded mt-4 hover:bg-blue-800 w-full"
+            onclick="submitExam()">Submit Exam</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.11.2/toastify.min.js"></script>
+    <script>
+        let currentExam = null; // To keep track of the current exam
+        let currentStudentName = ''; // To keep track of the current student's name
+
+        function showLoginForm() {
+            document.getElementById('login-form').classList.remove('hidden');
+            document.getElementById('register-form').classList.add('hidden');
+        }
+
+        function showRegisterForm() {
+            document.getElementById('register-form').classList.remove('hidden');
+            document.getElementById('login-form').classList.add('hidden');
+        }
+
+        function register() {
+            const username = document.getElementById('register-username').value;
+            const password = document.getElementById('register-password').value;
+            const role = document.getElementById('register-role').value;
+            let users = JSON.parse(localStorage.getItem('users')) || [];
+
+            if (username && password) {
+                users.push({ username, password, role });
+                localStorage.setItem('users', JSON.stringify(users));
+                Toastify({ text: 'Registration successful!', duration: 3000, backgroundColor: 'green' }).showToast();
+                document.getElementById('register-form').classList.add('hidden');
+            } else {
+                Toastify({ text: 'Please fill out all fields!', duration: 3000, backgroundColor: 'red' }).showToast();
+            }
+        }
+
+        function login() {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const user = users.find(user => user.username === username && user.password === password);
+
+            if (user) {
+                Toastify({ text: `Welcome, ${user.role}!`, duration: 3000, backgroundColor: 'green' }).showToast();
+                document.getElementById('login-form').classList.add('hidden');
+                document.getElementById('logout-button').classList.remove('hidden');
+
+                if (user.role === 'teacher') {
+                    document.getElementById('teacher-dashboard').classList.remove('hidden');
+                    loadExamsForManagement();
+                    loadExamRecords();
+                } else if (user.role === 'student') {
+                    document.getElementById('student-dashboard').classList.remove('hidden');
+                    loadExams();
+                }
+            } else {
+                Toastify({ text: 'Invalid username or password!', duration: 3000, backgroundColor: 'red' }).showToast();
+            }
+        }
+
+        function logout() {
+            document.getElementById('logout-button').classList.add('hidden');
+            document.getElementById('teacher-dashboard').classList.add('hidden');
+            document.getElementById('student-dashboard').classList.add('hidden');
+            Toastify({ text: 'Logged out successfully!', duration: 3000, backgroundColor: 'green' }).showToast();
+        }
+
+        function createExam() {
+            const examName = document.getElementById('exam-name').value;
+            const questionText = document.getElementById('question-text').value;
+            const options = Array.from(document.getElementById('answer-options').getElementsByTagName('input'))
+                .map(input => input.value);
+            const correctAnswer = options[2];
+
+            if (examName && questionText && options.length === 3) {
+                const newExam = {
+                    id: Date.now(),
+                    examName,
+                    question: questionText,
+                    options,
+                    correctAnswer
+                };
+
+                let exams = JSON.parse(localStorage.getItem('exams')) || [];
+                exams.push(newExam);
+                localStorage.setItem('exams', JSON.stringify(exams));
+                loadExamsForManagement();
+                Toastify({ text: 'Exam created successfully!', duration: 3000, backgroundColor: 'green' }).showToast();
+            } else {
+                Toastify({ text: 'Please fill in all fields!', duration: 3000, backgroundColor: 'red' }).showToast();
+            }
+        }
+
+        function loadExamsForManagement() {
+            const exams = JSON.parse(localStorage.getItem('exams')) || [];
+            const examContainer = document.getElementById('manage-exams');
+            examContainer.innerHTML = '';
+            exams.forEach(exam => {
+                const examElement = document.createElement('div');
+                examElement.classList.add('border', 'p-4', 'rounded', 'mb-4');
+                examElement.innerHTML = `
+                    <h3 class="font-bold">${exam.examName}</h3>
+                    <p>${exam.question}</p>
+                    <p>Options: ${exam.options.join(', ')}</p>
+                    <p>Correct Answer: ${exam.correctAnswer}</p>
+                    <button onclick="deleteExam(${exam.id})" class="bg-red-600 text-white py-1 px-3 rounded mt-2 hover:bg-red-800">Delete</button>
+                `;
+                examContainer.appendChild(examElement);
+            });
+        }
+
+        function deleteExam(examId) {
+            let exams = JSON.parse(localStorage.getItem('exams')) || [];
+            exams = exams.filter(exam => exam.id !== examId);
+            localStorage.setItem('exams', JSON.stringify(exams));
+            loadExamsForManagement();
+            Toastify({ text: 'Exam deleted successfully!', duration: 3000, backgroundColor: 'red' }).showToast();
+        }
+
+        function loadExams() {
+            const exams = JSON.parse(localStorage.getItem('exams')) || [];
+            const examContainer = document.getElementById('available-exams');
+            examContainer.innerHTML = '';
+            exams.forEach(exam => {
+                const examElement = document.createElement('div');
+                examElement.classList.add('border', 'p-4', 'rounded', 'mb-4');
+                examElement.innerHTML = `
+                    <h3 class="font-bold">${exam.examName}</h3>
+                    <p>${exam.question}</p>
+                    <button onclick="startExam(${exam.id})" class="bg-blue-600 text-white py-2 px-4 rounded mt-2 hover:bg-blue-800">Start Exam</button>
+                `;
+                examContainer.appendChild(examElement);
+            });
+        }
+
+        function startExam(examId) {
+            currentExam = JSON.parse(localStorage.getItem('exams')).find(exam => exam.id === examId);
+            document.getElementById('available-exams').innerHTML = `
+                <h3 class="font-bold">${currentExam.examName}</h3>
+                <p>${currentExam.question}</p>
+                <input type="radio" name="answer" value="${currentExam.options[0]}" /> ${currentExam.options[0]}<br>
+                <input type="radio" name="answer" value="${currentExam.options[1]}" /> ${currentExam.options[1]}<br>
+                <input type="radio" name="answer" value="${currentExam.options[2]}" /> ${currentExam.options[2]}<br>
+            `;
+        }
+
+        function submitExam() {
+            const selectedAnswer = document.querySelector('input[name="answer"]:checked');
+            if (!selectedAnswer) {
+                Toastify({ text: 'Please select an answer!', duration: 3000, backgroundColor: 'red' }).showToast();
+                return;
+            }
+
+            const marks = selectedAnswer.value === currentExam.correctAnswer ? 1 : 0;
+            saveExamResult(marks);
+            Toastify({ text: `Exam Submitted! You scored ${marks} marks`, duration: 3000, backgroundColor: 'green' }).showToast();
+        }
+
+        function saveExamResult(marks) {
+            const studentName = currentStudentName || prompt('Enter your name:');
+            const examRecords = JSON.parse(localStorage.getItem('examRecords')) || [];
+            examRecords.push({ examName: currentExam.examName, studentName, marks });
+            localStorage.setItem('examRecords', JSON.stringify(examRecords));
+            loadExamRecords();
+        }
+
+        function loadExamRecords() {
+            const examRecords = JSON.parse(localStorage.getItem('examRecords')) || [];
+            const examRecordsContainer = document.getElementById('exam-records');
+            examRecordsContainer.innerHTML = '';
+            if (examRecords.length === 0) {
+                examRecordsContainer.innerHTML = '<tr><td colspan="3" class="text-center p-4">No records available.</td></tr>';
+            }
+            examRecords.forEach(record => {
+                const recordElement = document.createElement('tr');
+                recordElement.innerHTML = `
+                    <td class="border px-4 py-2">${record.examName}</td>
+                    <td class="border px-4 py-2">${record.studentName}</td>
+                    <td class="border px-4 py-2">${record.marks}</td>
+                `;
+                examRecordsContainer.appendChild(recordElement);
+            });
+        }
+    </script>
+</body>
+
+</html>
